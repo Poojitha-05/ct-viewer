@@ -1,0 +1,54 @@
+/* 1) Import Poppins */
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap');
+
+/* 2) AWSM palette */
+:root {
+  --clr-red:   #F7444E;
+  --clr-light: #F7F8F3;
+  --clr-teal:  #78BCC4;
+  --clr-dark:  #002C3E;
+}
+
+body {
+  font-family: 'Poppins', sans-serif;
+  background: var(--clr-light);
+  color: var(--clr-dark);
+}
+
+/* 3) Override Bootstrap container spacing */
+.container {
+  padding-top: 2rem;
+}
+
+/* 4) Style file inputs: transparent outline */
+input[type="file"]::file-selector-button {
+  margin-right: 0.5rem;
+  padding: 0.375rem 0.75rem;
+  border: 1px solid var(--clr-dark);
+  border-radius: 4px;
+  background: transparent;
+  color: var(--clr-dark);
+  font-family: inherit;
+}
+
+/* 5) Style selects/inputs */
+.form-control,
+.form-select {
+  border: 1px solid var(--clr-dark) !important;
+  background: transparent !important;
+  color: var(--clr-dark) !important;
+}
+
+/* 6) Style range slider accent */
+input[type=range] {
+  accent-color: var(--clr-teal);
+}
+
+/* 7) Canvas wrapper */
+.viewer-canvas {
+  border: 1px solid var(--clr-dark);
+  background: #000; /* keep CT black background if desired */
+  display: block;
+  margin: 1rem auto;
+  max-width: 100%;
+}
