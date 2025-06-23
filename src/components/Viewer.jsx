@@ -6,7 +6,7 @@ export default function Viewer({ ctFile, maskFiles, view }) {
   const [sliceIdx, setSliceIdx] = useState(0);
   const [dims, setDims] = useState({ nx: 0, ny: 0, nz: 0 });
 
-  // Utility: read a NIfTI file into header + image buffer
+  // for returning the header and image data
   const readNifti = (file) =>
     new Promise((resolve) => {
       const reader = new FileReader();
@@ -22,7 +22,7 @@ export default function Viewer({ ctFile, maskFiles, view }) {
       reader.readAsArrayBuffer(file);
     });
 
-  // When CT or view changes, load dims and reset slice index to middle
+  // update dimensions and set slice index to middle when ct or view changes
   useEffect(() => {
     if (!ctFile) return;
     (async () => {
@@ -36,13 +36,14 @@ export default function Viewer({ ctFile, maskFiles, view }) {
     })();
   }, [ctFile, view]);
 
-  // Draw whenever inputs change
+  // redraw canvas whenever inputs change, so it is all responsive
   useEffect(() => {
     if (!ctFile || dims.nx === 0) return;
     (async () => {
       const { nx, ny, nz } = dims;
       const { header: cHdr, image: cBuf } = await readNifti(ctFile);
-      // Map to correct typed array
+
+      // convert image buffer into the right type of array
       let ctRaw;
       switch (cHdr.datatypeCode) {
         case nifti.NIFTI1.TYPE_INT16:
@@ -57,7 +58,8 @@ export default function Viewer({ ctFile, maskFiles, view }) {
         default:
           ctRaw = new Uint8Array(cBuf);
       }
-      // Windowing: clamp Hounsfield to [–1000,3000]
+
+      // apply windowing with units 0–255
       const wmin = -1000;
       const wmax = 3000;
       const ctDisp = new Uint8ClampedArray(ctRaw.length);
@@ -66,7 +68,7 @@ export default function Viewer({ ctFile, maskFiles, view }) {
         ctDisp[i] = Math.max(0, Math.min(255, Math.round(w)));
       }
 
-      // Load masks
+      // load and process mask files
       const masks = await Promise.all(
         maskFiles.map(async (f) => {
           const { image: mBuf } = await readNifti(f);
@@ -74,7 +76,7 @@ export default function Viewer({ ctFile, maskFiles, view }) {
         })
       );
 
-      // Determine canvas size
+      // figure out canvas dimensions 
       let W, H, idx;
       if (view === 'axial') {
         W = nx;
@@ -87,13 +89,13 @@ export default function Viewer({ ctFile, maskFiles, view }) {
         H = nz;
       }
 
-      // Set up canvas
+      // set canvas' size
       const canvas = canvasRef.current;
       canvas.width = W;
       canvas.height = H;
       const ctx = canvas.getContext('2d');
 
-      // Draw CT slice
+      // draw the grayscale ct image slice
       const img = ctx.createImageData(W, H);
       for (let y = 0; y < H; y++) {
         for (let x = 0; x < W; x++) {
@@ -110,7 +112,7 @@ export default function Viewer({ ctFile, maskFiles, view }) {
       }
       ctx.putImageData(img, 0, 0);
 
-      // Overlay masks via fillRect (preserves CT underneath)
+      // overlay each mask with a RED semi-transparent tint
       masks.forEach((maskRaw, mi) => {
         const color = [0, 0, 0];
         color[mi % 3] = 255;
@@ -134,7 +136,6 @@ export default function Viewer({ ctFile, maskFiles, view }) {
       <canvas
         ref={canvasRef}
         className="viewer-canvas"
-        // style={{ border: '1px solid #ccc', display: 'block', margin: '1rem 0' }}
       />
       <label>
         {view.charAt(0).toUpperCase() + view.slice(1)} slice:
